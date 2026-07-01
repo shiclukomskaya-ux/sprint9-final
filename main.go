@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"math/rand"
+
+	sqlite3 "modernc.org/sqlite/lib"
 )
 
 const (
@@ -42,7 +44,25 @@ func maximum(data []int) int {
 
 // maxChunks returns the maximum number of elements in a chunks.
 func maxChunks(data []int) int {
-	// ваш код здесь
+	res := []int{}
+	length := len(data)
+
+	part := length / CHUNKS
+	remainder := length % CHUNKS
+
+	start := 0
+	for i := 0; i < CHUNKS; i++ {
+		currentSize := part
+		if remainder > 0 {
+			currentSize++
+			remainder--
+		}
+		end := start + currentSize
+		max := maximum(data[start:end])
+		res = append(res, max)
+		start = end
+	}
+	return maximum(res)
 }
 
 func main() {
