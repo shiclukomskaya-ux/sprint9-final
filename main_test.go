@@ -26,7 +26,7 @@ func TestMaximum(t *testing.T) {
 
 	many := []int{10, 200, 30, 80, 40}
 	if maximum(many) != 200 {
-		t.Errorf("Ожидали получить максимально 100, полу %d", maximum(many))
+		t.Errorf("Ожидали получить максимально 200, полу %d", maximum(many))
 	}
 
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
+	"time"
 )
 
 const (
@@ -11,101 +12,78 @@ const (
 	CHUNKS = 8
 )
 
-// generateRandomElements generates random elements.
 func generateRandomElements(size int) []int {
-	if size == 0 {
+	if size <= 0 {
 		return []int{}
 	}
-	numbers := make([]int, size) // ваш код здесь
+
+	numbers := make([]int, size)
 	for i := 0; i < size; i++ {
 		numbers[i] = rand.Intn(SIZE)
 	}
 	return numbers
-
 }
 
-// maximum returns the maximum number of elements.
 func maximum(data []int) int {
 	if len(data) == 0 {
 		return 0
 	}
+
 	if len(data) == 1 {
 		return data[0]
 	}
-	maximum := data[0] // ваш код здесь
+
+	max := data[0]
 	for i := 1; i < len(data); i++ {
-		if data[i] > maximum {
-			maximum = data[i]
+		if data[i] > max {
+			max = data[i]
 		}
 	}
-	return maximum
+	return max
 }
 
-// maxChunks returns the maximum number of elements in a chunks.
 func maxChunks(data []int) int {
-	res := []int{}
+	if len(data) == 0 {
+		return 0
+	}
+
+	if len(data) < CHUNKS {
+		return maximum(data)
+	}
+
+	chunkMaximums := make([]int, CHUNKS)
 	var wg sync.WaitGroup
-	res := []int{}
-	length := len(data)
 
-	part := length / CHUNKS
-	remainder := length % CHUNKS
-
-	start := 0
+	chunkSize := len(data) / CHUNKS
 	for i := 0; i < CHUNKS; i++ {
-		currentSize := part
-		if remainder > 0 {
-			currentSize++
-			remainder--
-		}
-		begin := start * len(res)
-		end := start + currentSize
-		max := maximum(data[begin:end])
-		res = append(res, max)
-		start = end
-	}
-	return maximum(res)
-}
-var list []int
-var wg sync.WaitGroup
-var mu sync.Mutex
-func do() {
-	defer wg.Done()
-	for i := 0; i < SIZE; i++ {
-		mu.Lock()
-		list = append(list, i)
-		mu.Unlock()
+		wg.Add(1)
 
+		begin := i * chunkSize
+		end := begin + chunkSize
+
+		go func(slice []int, idx int) {
+			defer wg.Done()
+			chunkMaximums[idx] = maximum(slice)
+		}(data[begin:end], i)
 	}
+	wg.Wait()
+
+	return maximum(chunkMaximums)
 }
 
 func main() {
-
-
-	wg.Add(8)
-	for i := 0; i < 8; i++ {
-		go do()
-	}
-
-	wg.Wait()
-
-	sum := 0
-	for _, v := range list {
-		sum += v
-	}
-	fmt.Println(len(list), sum)
-}
-
 	fmt.Printf("Генерируем %d целых чисел", SIZE)
-	// ваш код здесь
+	data := generateRandomElements(SIZE) // ваш код здесь
 
 	fmt.Println("Ищем максимальное значение в один поток")
-	// ваш код здесь
-
+	start1 := time.Now()
+	max := maximum(data)
+	elapsed := time.Since(start1).Microseconds()
 	fmt.Printf("Максимальное значение элемента: %d\nВремя поиска: %d ms\n", max, elapsed)
 
 	fmt.Printf("Ищем максимальное значение в %d потоков", CHUNKS)
-	// ваш код здесь
-
+	start2 := time.Now()
+	max = maxChunks(data)
+	elapsed = time.Since(start2).Microseconds()
 	fmt.Printf("Максимальное значение элемента: %d\nВремя поиска: %d ms\n", max, elapsed)
 }
