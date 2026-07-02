@@ -3,8 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
-
-	sqlite3 "modernc.org/sqlite/lib"
+	"sync"
 )
 
 const (
@@ -45,6 +44,8 @@ func maximum(data []int) int {
 // maxChunks returns the maximum number of elements in a chunks.
 func maxChunks(data []int) int {
 	res := []int{}
+	var wg sync.WaitGroup
+	res := []int{}
 	length := len(data)
 
 	part := length / CHUNKS
@@ -57,15 +58,44 @@ func maxChunks(data []int) int {
 			currentSize++
 			remainder--
 		}
+		begin := start * len(res)
 		end := start + currentSize
-		max := maximum(data[start:end])
+		max := maximum(data[begin:end])
 		res = append(res, max)
 		start = end
 	}
 	return maximum(res)
 }
+var list []int
+var wg sync.WaitGroup
+var mu sync.Mutex
+func do() {
+	defer wg.Done()
+	for i := 0; i < SIZE; i++ {
+		mu.Lock()
+		list = append(list, i)
+		mu.Unlock()
+
+	}
+}
 
 func main() {
+
+
+	wg.Add(8)
+	for i := 0; i < 8; i++ {
+		go do()
+	}
+
+	wg.Wait()
+
+	sum := 0
+	for _, v := range list {
+		sum += v
+	}
+	fmt.Println(len(list), sum)
+}
+
 	fmt.Printf("Генерируем %d целых чисел", SIZE)
 	// ваш код здесь
 
